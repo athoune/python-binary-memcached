@@ -310,7 +310,13 @@ class Server(object):
             raise MemcachedException('Code: %d Message: %s' % (status,
                 extra_content))
 
-        flags, value = struct.unpack('!L%ds' % (bodylen - 4, ), extra_content)
+        if extlen == 4:  # I should wrote this stuff, it should be my flags
+            if keylen > 0:  # Response may contains key
+                flags, key, value = struct.unpack('!L%ds%ds' % (keylen, bodylen - 4 - keylen), extra_content)
+            else:
+                flags, value = struct.unpack('!L%ds' % (bodylen - 4, ), extra_content)
+        else:
+            raise MemcachedException("Unknown extra, don't know what to do wit hit : %i" % extlen)
 
         return self.deserialize(value, flags)
 
